@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="bn">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>নিলক্ষিয়া সমন্বিত খামার</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#EEF2E8; --surface:#FAFCF6; --ink:#1A241C; --muted:#55635A; --line:#CAD4C1;
+  --red:#C0392B; --paddy:#4A7929; --water:#1B6A76; --mud:#8B5224; --hen:#946505; --tin:#5D686E;
+  --plot:#F8FAF3; --field:#E1EAD3; --pond:#C6E2E3; --dike:#E7E4CB; --fodder:#D2E6BB;
+  --cattle:#EFD8BF; --hen-fill:#F4E2AC; --tree:#84A96D; --road:#DFD8C8; --school:#DDE0DA; --asphalt:#C8CBC3;
+  --display:'Noto Serif Bengali', 'Hind Siliguri', Georgia, serif;
+  --sans:'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', 'Segoe UI', system-ui, sans-serif;
+  --mono:'IBM Plex Mono', 'Hind Siliguri', ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1511; --surface:#161E18; --ink:#E2E9DF; --muted:#9AA89D; --line:#2C382F;
+    --red:#EC7366; --paddy:#92C469; --water:#62BBC5; --mud:#D59A66; --hen:#E0B54A; --tin:#A4AEB3;
+    --plot:#131A15; --field:#1A2618; --pond:#15393D; --dike:#262A1C; --fodder:#21331E;
+    --cattle:#36281B; --hen-fill:#3A3016; --tree:#44643A; --road:#2A2820; --school:#23262A; --asphalt:#3A3E3A;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1511; --surface:#161E18; --ink:#E2E9DF; --muted:#9AA89D; --line:#2C382F;
+  --red:#EC7366; --paddy:#92C469; --water:#62BBC5; --mud:#D59A66; --hen:#E0B54A; --tin:#A4AEB3;
+  --plot:#131A15; --field:#1A2618; --pond:#15393D; --dike:#262A1C; --fodder:#21331E;
+  --cattle:#36281B; --hen-fill:#3A3016; --tree:#44643A; --road:#2A2820; --school:#23262A; --asphalt:#3A3E3A;
+}
+
+body{background:var(--ground); color:var(--ink); font:17px/1.75 var(--sans);}
+.wrap{max-width:60rem; margin:0 auto; padding-inline:20px; padding-block:40px 72px; display:flex; flex-direction:column; gap:56px;}
+h1,h2{font-family:var(--display); text-wrap:balance; margin:0;}
+h1{font-size:clamp(2rem, 5.2vw, 3rem); line-height:1.3; font-weight:700;}
+h2{font-size:1.55rem; line-height:1.4; font-weight:600;}
+h3{font-size:1.08rem; line-height:1.5; margin:0; font-weight:600;}
+p{margin:0; max-width:66ch;}
+b{font-weight:600;}
+section{display:flex; flex-direction:column; gap:18px;}
+:focus-visible{outline:2px solid var(--water); outline-offset:2px;}
+
+.eyebrow{font:500 14px/1.5 var(--sans); color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 16px;}
+header{display:flex; flex-direction:column; gap:14px;}
+.lead{font-size:1.14rem; color:var(--ink);}
+.note{color:var(--muted); font-size:.96rem;}
+
+/* land facts */
+.facts{display:grid; grid-template-columns:repeat(auto-fit, minmax(13rem, 1fr)); gap:1px; margin:0; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+.facts > div{background:var(--surface); padding:14px 16px; display:flex; flex-direction:column; gap:2px;}
+.facts dt{font:600 13.5px/1.5 var(--sans); color:var(--muted);}
+.facts dd{margin:0;}
+.facts dd.sub{color:var(--muted); font-size:.9rem; line-height:1.6;}
+
+/* figures */
+figure{margin:0; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px;}
+.scroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+figcaption{color:var(--muted); font-size:.92rem; padding-inline:4px; max-width:72ch;}
+svg{display:block; width:100%; height:auto;}
+svg.site{min-width:900px;}
+svg.loop{min-width:680px;}
+
+/* site plan */
+.site{color:var(--ink);}
+.site .f-field{fill:var(--field);}
+.site .f-plot{fill:var(--plot);}
+.site .f-school{fill:var(--school);}
+.site .f-road{fill:var(--road);}
+.site .f-asphalt{fill:var(--asphalt); stroke:var(--tin); stroke-width:2;}
+.site .f-fodder{fill:var(--fodder); stroke:var(--paddy); stroke-width:2;}
+.site .f-fodder-soft{fill:var(--fodder);}
+.site .f-bldg{fill:var(--school); stroke:var(--tin); stroke-width:2;}
+.site .f-earth{fill:var(--dike); stroke:var(--mud); stroke-width:2;}
+.site .s-tin{stroke:var(--tin);}
+.site .f-cattle{fill:var(--cattle); stroke:var(--mud); stroke-width:2.5;}
+.site .f-hen{fill:var(--hen-fill); stroke:var(--hen); stroke-width:2.5;}
+.site .fence{fill:var(--hen-fill); fill-opacity:.4; stroke:var(--hen); stroke-width:2.5; stroke-dasharray:10 6;}
+.site .f-water{fill:var(--water);}
+.site .f-pond{fill:var(--pond); stroke:var(--water); stroke-width:2.5;}
+.site .f-dike{fill:var(--dike);}
+.site .f-tree{fill:var(--tree); fill-opacity:.65;}
+.site .tree-belt{fill:none; stroke:var(--tree); stroke-width:19; stroke-dasharray:0 30; stroke-linecap:round;}
+.site .tree-belt.sm{stroke-width:13; stroke-dasharray:0 20;}
+.site .b-red{fill:none; stroke:var(--red); stroke-width:4.5; stroke-linejoin:round;}
+.site .dashed{fill:var(--surface); stroke:var(--ink); stroke-width:2; stroke-dasharray:7 5;}
+.site .unknown{fill:var(--surface); stroke:var(--red); stroke-width:2.5;}
+.site .walk{stroke:var(--ink); stroke-width:2.5;}
+.site .f-ink{fill:var(--ink);}
+.site .s-ink{fill:none; stroke:var(--ink); stroke-width:2;}
+.site .ink-line{stroke:var(--ink); stroke-width:4;}
+.site text{fill:var(--ink); font-family:var(--sans);}
+.site .p-t{font-size:22px; font-weight:600;}
+.site .p-t2{font-size:19px; font-weight:600;}
+.site .p-s{font-size:17px; fill:var(--muted);}
+.site .p-s.strong{font-weight:600; fill:var(--ink);}
+.site .p-s.hen{font-weight:600; fill:var(--hen);}
+.site .p-s.red{font-weight:600; fill:var(--red);}
+.site .p-m{font-size:16px; fill:var(--muted);}
+.site .p-big{font-family:var(--display); font-size:32px; font-weight:700; fill:var(--water);}
+
+/* loop diagram */
+.loop{color:var(--muted);}
+.loop .flow{fill:none; stroke:currentColor; stroke-width:1.6;}
+.loop rect{stroke-width:1.8;}
+.loop .n-cattle rect{fill:var(--cattle); stroke:var(--mud);}
+.loop .n-hen rect{fill:var(--hen-fill); stroke:var(--hen);}
+.loop .n-duck rect{fill:var(--surface); stroke:var(--ink); stroke-dasharray:6 4;}
+.loop .n-proc rect{fill:var(--dike); stroke:var(--tin);}
+.loop .n-green rect{fill:var(--fodder); stroke:var(--paddy);}
+.loop .n-pond rect{fill:var(--pond); stroke:var(--water);}
+.loop text{font-family:var(--sans); text-anchor:middle;}
+.loop .l-t{font-size:15px; font-weight:600; fill:var(--ink);}
+.loop .l-s{font-size:12.5px; fill:var(--muted);}
+.loop .l-a{font-size:13px; font-weight:500; fill:var(--muted);}
+
+/* zone table */
+.tablewrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface);}
+table{border-collapse:collapse; width:100%; font-size:.96rem;}
+th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+th{font:600 13.5px/1.5 var(--sans); color:var(--muted);}
+tbody tr:last-child td{border-bottom:none;}
+td.num{font-variant-numeric:tabular-nums; white-space:nowrap;}
+tr.total td{font-weight:600; background:var(--ground);}
+.sw{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:8px; vertical-align:-1px; border:1.5px solid var(--sw-b, var(--line)); background:var(--sw, transparent);}
+.sw.pond{--sw:var(--pond); --sw-b:var(--water);}
+.sw.cattle{--sw:var(--cattle); --sw-b:var(--mud);}
+.sw.hen{--sw:var(--hen-fill); --sw-b:var(--hen);}
+.sw.fodder{--sw:var(--fodder); --sw-b:var(--paddy);}
+.sw.road{--sw:var(--road); --sw-b:var(--road);}
+.sw.tree{--sw:var(--tree); --sw-b:var(--tree); border-radius:50%;}
+.sw.bldg{--sw:var(--school); --sw-b:var(--tin);}
+.sw.duck{--sw:var(--surface); --sw-b:var(--ink); border-style:dashed;}
+
+/* reasoning list */
+.why{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit, minmax(17rem, 1fr)); gap:14px 28px;}
+.why li{display:flex; flex-direction:column; gap:4px; padding-top:12px; border-top:1px solid var(--line);}
+.why li b{font-size:1.02rem;}
+.why li span{color:var(--muted); font-size:.95rem;}
+
+/* enterprise cards */
+.ents{display:grid; grid-template-columns:repeat(auto-fit, minmax(19rem, 1fr)); gap:16px;}
+.ent{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:12px;}
+.ent header{flex-direction:row; align-items:center; gap:10px; flex-wrap:wrap;}
+.ent header .sw{width:16px; height:16px; margin:0;}
+.chip{margin-left:auto; font:600 12.5px/1 var(--sans); padding:6px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); white-space:nowrap;}
+.chip.now{color:var(--paddy); border-color:var(--paddy);}
+.ent dl{margin:0; display:flex; flex-direction:column;}
+.ent dl > div{display:grid; grid-template-columns:5.6rem 1fr; gap:10px; padding-block:8px; border-top:1px dashed var(--line);}
+.ent dt{font:600 13.5px/1.7 var(--sans); color:var(--muted);}
+.ent dd{margin:0; font-size:.95rem; line-height:1.65;}
+
+/* timeline */
+.timeline{list-style:none; margin:0; padding:0; display:flex; flex-direction:column;}
+.timeline li{display:grid; grid-template-columns:11rem 1fr; gap:6px 20px; padding-block:16px; border-top:1px solid var(--line);}
+.timeline li:last-child{border-bottom:1px solid var(--line);}
+.timeline time{font:600 14.5px/1.6 var(--sans); color:var(--water);}
+.timeline h3{margin-bottom:4px;}
+.timeline p{color:var(--muted); font-size:.95rem;}
+.timeline li.eid time{color:var(--mud);}
+
+/* cautions + questions */
+.cautions{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:12px;}
+.cautions li{padding:14px 16px; background:var(--surface); border:1px solid var(--line); border-radius:10px; font-size:.97rem;}
+.ask{background:var(--surface); border:1.5px solid var(--water); border-radius:14px; padding:22px;}
+.ask ol{margin:0; padding-left:1.6rem; display:flex; flex-direction:column; gap:8px; list-style-type:bengali;}
+.ask li::marker{color:var(--water); font-weight:600;}
+
+footer{font:14px/1.7 var(--sans); color:var(--muted); display:flex; flex-direction:column; gap:6px; padding-top:18px; border-top:1px solid var(--line);}
+
+@media (max-width:560px){
+  .ent dl > div{grid-template-columns:1fr; gap:2px;}
+  .timeline li{grid-template-columns:1fr;}
+  .ask{padding:18px;}
+}
+</style>
+
+<div class="wrap" lang="bn">
+
+<header>
+  <div class="eyebrow"><span>খসড়া পরিকল্পনা · ২২ সেপ্টেম্বর ২০২৬</span><span>শ্রীবরদী–তারাকান্দি–নিলক্ষিয়া সড়ক</span></div>
+  <h1>নিলক্ষিয়া সমন্বিত খামার</h1>
+  <p class="lead">আপনার প্রায় ১ একর (≈ ১০০ শতাংশ) জমিতে মাছ, গরু আর মুরগি একসাথে — এমনভাবে সাজানো যাতে একটার বর্জ্য আরেকটার খাবার বা সার হয়। মাপ আপনার Google Maps-এর মাপ থেকে নেওয়া।</p>
+</header>
+
+<section>
+  <h2>জমিটা কেমন</h2>
+  <p class="note">আপনার Google Maps "Measure distance" অনুযায়ী মোট জমি <b>৪,০৩৩ m² (৪৩,৪১৫ বর্গফুট) ≈ ১০০ শতাংশ</b>। প্রতিটা দিকের দৈর্ঘ্য আর প্রতিটা অংশের আকার ওই স্ক্রিনশট থেকে হিসাব করা। দলিল বা আমিনের মাপের সাথে একবার মিলিয়ে নিন।</p>
+  <dl class="facts">
+    <div><dt>বড় প্লট</dt><dd><b>~৭৮ শতাংশ</b></dd><dd class="sub">বর্গাকার, ~৫৬ × ৫৬ মিটার (≈ ১৮৪ × ১৮৪ ফুট) · পশ্চিমের ২/৩ অংশ গাছে ঢাকা, পূর্বের ১/৩ খোলা</dd></div>
+    <div><dt>ছোট প্লট</dt><dd><b>~১৪ শতাংশ</b></dd><dd class="sub">আয়তাকার, ~২০ × ২৮ মিটার (≈ ৬৬ × ৯২ ফুট) · বেশির ভাগ জুড়ে আপনার টিনশেড ঘর; বড় প্লটের সাথে কোণায় ~৪ মিটার জুড়ে জোড়া</dd></div>
+    <div><dt>প্রবেশ রাস্তা</dt><dd><b>~৭ শতাংশ</b></dd><dd class="sub">৬১ মিটার লম্বা, ৪.৬ মিটার চওড়া (≈ ২০০ × ১৫ ফুট) · শ্রীবরদী–তারাকান্দি–নিলক্ষিয়া সড়ক থেকে গেট পর্যন্ত</dd></div>
+    <div><dt>চারপাশ</dt><dd><b>পূর্বে ও দক্ষিণে ধানখেত</b></dd><dd class="sub">পশ্চিমে নিলক্ষিয়া পাবলিক কলেজ; রাস্তার দুই পাশে পাশের খোলা জমি</dd></div>
+  </dl>
+</section>
+
+<section>
+  <h2>নকশা</h2>
+  <p>এক কথায়: <b>পূর্বের খোলা জায়গায় পুকুর</b>; পশ্চিমে গাছের ছায়ায় শেড — উত্তরে আলাদা বেড়ার ভেতর <b>মুরগির শেড</b>, গেটের দক্ষিণে <b>গরুর শেড, বায়োগ্যাস ও কম্পোস্ট</b>। গেট থেকে একটা <b>~১০ ফুটের রাস্তা</b> পশ্চিম কিনারা ধরে <b>ছোট প্লটে</b> গেছে, যেখানে আপনার টিনশেড ঘরটা স্টোর ও খামারির থাকার ঘর হবে। ছোট প্লটে কোনো পশু নয় — পাশেই কলেজ।</p>
+
+  <figure>
+    <div class="scroll">
+    <svg class="site" viewBox="-720 -60 1420 960" role="img" aria-label="বর্গাকার বড় প্লট: পূর্বে খোলা জায়গায় পুকুর; পশ্চিমে গাছের ছায়ায় উত্তরে আলাদা বেড়ায় মুরগির শেড, গেটের দক্ষিণে গরুর শেড, বায়োগ্যাস, কম্পোস্ট ও নেপিয়ার। পশ্চিমে ৬১ মিটার প্রবেশ রাস্তা শ্রীবরদী–তারাকান্দি–নিলক্ষিয়া সড়ক পর্যন্ত। দক্ষিণ-পশ্চিম কোণায় আয়তাকার ছোট প্লটে আপনার টিনশেড ঘর, স্টোর ও খামারির ঘর হিসেবে; গেট থেকে পশ্চিম কিনারা ধরে রাস্তা ওখানে গেছে।">
+      <rect class="f-field" x="-720" y="-60" width="1420" height="960"/>
+
+      <!-- surroundings -->
+      <text class="p-s" x="-250" y="140" text-anchor="middle">পাশের খোলা জমি</text>
+      <text class="p-s" x="-300" y="460" text-anchor="middle">পাশের খোলা জমি</text>
+      <rect class="f-school" x="-600" y="575" width="425" height="325"/>
+      <text class="p-t2" x="-390" y="735" text-anchor="middle">নিলক্ষিয়া পাবলিক কলেজ</text>
+      <text class="p-s" x="660" y="280" text-anchor="middle" transform="rotate(90 660 280)">ধানখেত (পূর্ব)</text>
+      <text class="p-s" x="300" y="625" text-anchor="middle">ধানখেত (দক্ষিণ)</text>
+
+      <!-- access strip, full 61 m to the main road -->
+      <rect class="f-road" x="-625" y="275" width="625" height="46"/>
+      <polygon class="f-asphalt" points="-450.6,-60 -720,545 -784,516.5 -514.6,-88.5"/>
+      <text class="p-t2" x="-576" y="136" text-anchor="middle" dominant-baseline="central" transform="rotate(-66 -576 136)">শ্রীবরদী–তারাকান্দি–নিলক্ষিয়া সড়ক</text>
+      <text class="p-t2" x="-300" y="262" text-anchor="middle">প্রবেশ রাস্তা ৬১ × ৪.৬ মিটার</text>
+      <text class="p-m" x="-300" y="354" text-anchor="middle">≈ ২০০ × ১৫ ফুট · ~৭ শতাংশ</text>
+      <text class="p-s" x="-15" y="354" text-anchor="end">গেট + ফুটবাথ</text>
+
+      <!-- plot fills -->
+      <rect class="f-plot" x="0" y="0" width="560" height="560"/>
+      <rect class="f-plot" x="-160" y="560" width="200" height="280"/>
+
+      <!-- existing trees kept along north and west -->
+      <path class="tree-belt" d="M318,12 H12 V262"/>
+
+      <!-- roads -->
+      <rect class="f-road" x="0" y="275" width="330" height="46"/>
+      <rect class="f-road" x="12" y="321" width="28" height="380"/>
+      <rect class="f-road" x="-5" y="640" width="17" height="22"/>
+      <rect class="f-road" x="255" y="215" width="30" height="60"/>
+      <rect class="f-water" x="2" y="283" width="18" height="30" rx="2"/>
+      <rect class="f-water" x="258" y="219" width="24" height="12" rx="2"/>
+      <text class="p-s" x="175" y="305" text-anchor="middle">ভেতরের রাস্তা</text>
+      <text class="p-s" x="26" y="480" text-anchor="middle" dominant-baseline="central" transform="rotate(-90 26 480)">ছোট প্লটের রাস্তা</text>
+
+      <!-- guard hut -->
+      <rect class="f-bldg" x="28" y="222" width="62" height="42" rx="3"/>
+      <text class="p-s" x="59" y="249" text-anchor="middle">পাহারা</text>
+
+      <!-- poultry zone, in the shade of existing trees -->
+      <rect class="fence" x="50" y="30" width="250" height="185" rx="4"/>
+      <text class="p-s hen" x="64" y="60">আলাদা মুরগি জোন</text>
+      <rect class="f-hen" x="85" y="72" width="180" height="67" rx="3"/>
+      <text class="p-t" x="175" y="104" text-anchor="middle">মুরগির শেড</text>
+      <text class="p-s" x="175" y="128" text-anchor="middle">~১০০০ সোনালি</text>
+      <text class="p-m" x="175" y="163" text-anchor="middle">৬০ × ২২ ফুট</text>
+      <circle class="f-tree" cx="95" cy="192" r="15"/>
+      <circle class="f-tree" cx="140" cy="188" r="17"/>
+      <circle class="f-tree" cx="205" cy="194" r="15"/>
+      <circle class="f-tree" cx="240" cy="178" r="13"/>
+
+      <!-- cattle side -->
+      <rect class="f-cattle" x="90" y="340" width="110" height="73" rx="3"/>
+      <text class="p-t2" x="145" y="372" text-anchor="middle">গরুর শেড</text>
+      <text class="p-s" x="145" y="398" text-anchor="middle">৬–৮টি গরু</text>
+      <text class="p-m" x="145" y="437" text-anchor="middle">৩৬ × ২৪ ফুট</text>
+      <circle class="f-earth s-tin" cx="255" cy="377" r="38"/>
+      <text class="p-s strong" x="255" y="383" text-anchor="middle">বায়োগ্যাস</text>
+      <circle class="f-water" cx="305" cy="432" r="8"/>
+      <text class="p-s" x="293" y="438" text-anchor="end">টিউবওয়েল</text>
+      <rect class="f-earth" x="80" y="452" width="110" height="75" rx="3"/>
+      <text class="p-t2" x="135" y="486" text-anchor="middle">কম্পোস্ট</text>
+      <text class="p-s" x="135" y="509" text-anchor="middle">কেঁচো সার</text>
+      <rect class="f-fodder" x="205" y="457" width="100" height="85" rx="3"/>
+      <text class="p-t2" x="255" y="495" text-anchor="middle">নেপিয়ার</text>
+      <text class="p-s" x="255" y="518" text-anchor="middle">ঘাস</text>
+
+      <!-- small white thing seen in the trees -->
+      <rect class="unknown" x="45" y="378" width="20" height="20" rx="2"/>
+      <text class="p-s red" x="55" y="394" text-anchor="middle">?</text>
+      <text class="p-s red" x="52" y="368" text-anchor="middle">এটা কী?</text>
+
+      <!-- pond on the open east side -->
+      <rect class="f-dike" x="330" y="25" width="220" height="510" rx="16"/>
+      <rect class="f-pond" x="370" y="65" width="140" height="430" rx="12"/>
+      <text class="p-s" x="350" y="280" text-anchor="middle" dominant-baseline="central" transform="rotate(-90 350 280)">পাড়: মাচায় লাউ · শিম · কুমড়া</text>
+      <text class="p-s" x="530" y="280" text-anchor="middle" dominant-baseline="central" transform="rotate(90 530 280)">পাড়: নেপিয়ার · কলা · পেঁপে</text>
+      <text class="p-big" x="440" y="236" text-anchor="middle">পুকুর</text>
+      <text class="p-s" x="440" y="270" text-anchor="middle">পানি ~১৫</text>
+      <text class="p-s" x="440" y="292" text-anchor="middle">শতাংশ</text>
+      <text class="p-m" x="440" y="320" text-anchor="middle">গভীর ৫–৬ ফুট</text>
+      <rect class="dashed" x="410" y="425" width="60" height="42" rx="3"/>
+      <text class="p-s strong" x="440" y="452" text-anchor="middle">হাঁস</text>
+      <line class="walk" x1="440" y1="467" x2="440" y2="495"/>
+
+      <!-- small plot -->
+      <rect class="f-fodder-soft" x="-160" y="780" width="200" height="60"/>
+      <rect class="f-bldg" x="-150" y="575" width="145" height="195" rx="3"/>
+      <text class="p-t2" x="-77.5" y="634" text-anchor="middle">টিনশেড ঘর</text>
+      <text class="p-s" x="-77.5" y="658" text-anchor="middle">(আপনার)</text>
+      <text class="p-s strong" x="-77.5" y="702" text-anchor="middle">স্টোর +</text>
+      <text class="p-s strong" x="-77.5" y="725" text-anchor="middle">খামারির ঘর</text>
+      <text class="p-s" x="-60" y="818" text-anchor="middle">ঘাস / সবজি</text>
+      <text class="p-s strong" x="-40" y="876" text-anchor="middle">ছোট প্লট · ~১৪ শতাংশ</text>
+
+      <!-- dimensions -->
+      <text class="p-m" x="280" y="-16" text-anchor="middle">~৫৬ মিটার (≈ ১৮৪ ফুট)</text>
+      <text class="p-m" x="600" y="280" text-anchor="middle" transform="rotate(90 600 280)">~৫৬ মিটার (≈ ১৮৪ ফুট)</text>
+      <text class="p-m" x="300" y="594" text-anchor="middle">~৫৬ মিটার (≈ ১৮৪ ফুট)</text>
+
+      <!-- key -->
+      <line class="b-red" x1="110" y1="665" x2="160" y2="665"/>
+      <text class="p-s" x="174" y="671">আপনার সীমানা (মোট ৪,০৩৩ m²)</text>
+      <rect class="dashed" x="110" y="688" width="50" height="26" rx="3"/>
+      <text class="p-s" x="174" y="707">পরে করবেন (দ্বিতীয় ধাপ)</text>
+      <path class="tree-belt sm" d="M115,742 H160"/>
+      <text class="p-s" x="174" y="748">এখনকার গাছ — রেখে দিন</text>
+      <rect class="f-water" x="119" y="771" width="32" height="14" rx="2"/>
+      <text class="p-s" x="174" y="784">ফুটবাথ (জীবাণুনাশক)</text>
+      <text class="p-s" x="110" y="822">মাপ: আপনার Google Maps-এর মাপ</text>
+
+      <!-- compass: the land sits ~25° clockwise on the map -->
+      <g transform="rotate(-25 560 720)">
+        <line class="ink-line" x1="560" y1="765" x2="560" y2="690"/>
+        <polygon class="f-ink" points="560,666 548,694 572,694"/>
+        <text class="p-t" x="560" y="656" text-anchor="middle">N</text>
+      </g>
+      <text class="p-s" x="560" y="800" text-anchor="middle">উত্তর</text>
+
+      <!-- scale -->
+      <text class="p-s" x="400" y="848" text-anchor="middle">২০ মিটার ≈ ৬৫ ফুট</text>
+      <rect class="f-ink" x="300" y="858" width="100" height="9"/>
+      <rect class="s-ink" x="400" y="858" width="100" height="9"/>
+      <text class="p-m" x="300" y="892" text-anchor="middle">০</text>
+      <text class="p-m" x="400" y="892" text-anchor="middle">১০</text>
+      <text class="p-m" x="500" y="892" text-anchor="middle">২০ মি</text>
+
+      <!-- whole property outline -->
+      <polygon class="b-red" points="0,0 560,0 560,560 40,560 40,840 -160,840 -160,560 0,560 0,321 -620.2,321 -599.8,275 0,275"/>
+    </svg>
+    </div>
+    <figcaption>বড় প্লট বর্গাকার, ছোট প্লট আয়তাকার — মাপ আপনার Google Maps-এর মাপ থেকে। ম্যাপে জমিটা প্রায় ২৫° বাঁকা; এখানে সোজা করে আঁকা, তাই "N" তীরটা একটু বাঁয়ে হেলানো। প্রবেশ রাস্তা পুরো ৬১ মিটার আঁকা, শ্রীবরদী–তারাকান্দি–নিলক্ষিয়া সড়ক পর্যন্ত। লাল দাগ = আপনার সীমানা। ডটেড গোল = এখনকার গাছ, যা রেখে দেবেন। লাল "?" = বড় প্লটে গাছের মাঝে একটা ছোট সাদা জিনিস দেখা যাচ্ছে — ওটা কী, জানাবেন।</figcaption>
+  </figure>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>অংশ</th><th>জমি (আনুমানিক)</th><th>কী থাকবে</th></tr></thead>
+      <tbody>
+        <tr><td><span class="sw pond"></span>পুকুর (পাড়সহ)</td><td class="num">~২৮ শতাংশ</td><td>পানি ~১৫ শতাংশ; পাড়ে নেপিয়ার, সবজি, কলা, পেঁপে</td></tr>
+        <tr><td><span class="sw hen"></span>মুরগি জোন</td><td class="num">~১১ শতাংশ</td><td>১০০০ সোনালির শেড, গাছের ছায়ায়, নিজস্ব বেড়া ও ফুটবাথ</td></tr>
+        <tr><td><span class="sw cattle"></span>গরুর শেড, বায়োগ্যাস, কম্পোস্ট</td><td class="num">~৭ শতাংশ</td><td>৬–৮টি গরুর জায়গা; গোবর → বায়োগ্যাস → সার</td></tr>
+        <tr><td><span class="sw fodder"></span>নেপিয়ার ঘাস</td><td class="num">~২ শতাংশ</td><td>আরও নেপিয়ার পুকুরের পাড়ে</td></tr>
+        <tr><td><span class="sw road"></span>ভেতরের রাস্তা</td><td class="num">~৫ শতাংশ</td><td>গেট থেকে পুকুর, মুরগি জোন ও ছোট প্লট পর্যন্ত</td></tr>
+        <tr><td><span class="sw tree"></span>গাছ + খালি জায়গা</td><td class="num">~২৫ শতাংশ</td><td>কিনারার গাছ, পাহারা ঘর, চলাফেরা, পরে বাড়ানো</td></tr>
+        <tr class="total"><td>বড় প্লট</td><td class="num">~৭৮ শতাংশ</td><td></td></tr>
+        <tr><td><span class="sw bldg"></span>ছোট প্লট</td><td class="num">~১৪ শতাংশ</td><td>আপনার টিনশেড ঘর (স্টোর / খামারির ঘর), বাকিতে ঘাস বা সবজি</td></tr>
+        <tr><td><span class="sw road"></span>প্রবেশ রাস্তা</td><td class="num">~৭ শতাংশ</td><td>শ্রীবরদী–তারাকান্দি–নিলক্ষিয়া সড়ক থেকে গেট পর্যন্ত</td></tr>
+        <tr class="total"><td>মোট জমি</td><td class="num">~১০০ শতাংশ</td><td>৪,০৩৩ m² · ~১ একর · ~৩ বিঘা</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>কেন এই জায়গায়</h2>
+  <ul class="why">
+    <li><b>পুকুর পূর্বের খোলা জায়গায়</b><span>বড় প্লটের পূর্বের ১/৩ অংশে গাছ নেই, আর পূর্বে ও দক্ষিণে ধানখেত — তাই পুকুর সকাল থেকে বিকেল পর্যন্ত রোদ পাবে। গাছ কাটার খরচ নেই, খোঁড়াও সহজ। বেশি রোদ = বেশি প্ল্যাঙ্কটন = মাছের বিনা পয়সার খাবার।</span></li>
+    <li><b>শেডগুলো গাছের ছায়ায়</b><span>পশ্চিমের গাছ রেখে শুধু শেডের জায়গার গাছ কাটুন। গরমে গাছের ছায়া মুরগি ও গরুর কষ্ট অনেক কমায়। চালের ওপর ঝুলে থাকা ডাল ছেঁটে দিন।</span></li>
+    <li><b>মুরগি উত্তরে, আলাদা বেড়ায়</b><span>কলেজ থেকে ~৫০ মিটার, গরুর শেড থেকে ~২০ মিটার দূরে। নিজস্ব গেট ও ফুটবাথ থাকলে বাইরের লোক, কুকুর, গাড়ি ঢুকবে না। শেডের লম্বা দিক প্রায় পূর্ব-পশ্চিম, তাই দুপুরের রোদ লম্বা দেয়ালে পড়ে না।</span></li>
+    <li><b>গরুর শেড গেটের কাছে</b><span>খড়ের গাড়ি, গরু কেনাবেচা — সব ভারী কাজ গেটের পাশেই শেষ। গোবর পাশেই বায়োগ্যাস ও কম্পোস্টে যায়, স্লারি পাইপ দিয়ে পুকুরের পাড় ও নেপিয়ারে।</span></li>
+    <li><b>পুকুরের মাটি কাজে লাগান</b><span>খোঁড়ার মাটি দিয়ে শেডের মেঝে, রাস্তা আর পাড় উঁচু করুন — বন্যা থেকে বাঁচবে, বাইরে থেকে মাটি কিনতে হবে না।</span></li>
+    <li><b>গন্ধ কোন দিকে যাবে</b><span>গরমকালে বাতাস সাধারণত দক্ষিণ-পূর্ব থেকে আসে, তাই গন্ধ উত্তর-পশ্চিমে (পাশের জমি, বাড়ির দিকে) যেতে পারে। লিটার শুকনো রাখুন, গোবর-লিটার খোলা জমিয়ে রাখবেন না, কম্পোস্ট ঢেকে রাখুন।</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>বর্জ্য থেকে খাবার</h2>
+  <p>সমন্বিত খামারের আসল লাভ এখানেই: একটার বর্জ্য আরেকটার খাবার বা সার, তাই সার, ঘাস আর মাছের খাবারের খরচ কমে।</p>
+  <figure>
+    <div class="scroll">
+    <svg class="loop" viewBox="0 0 760 300" role="img" aria-label="পুষ্টিচক্র: গরুর গোবর বায়োগ্যাসে যায়, স্লারি নেপিয়ারে সার হয়, নেপিয়ার আবার গরু খায়; মুরগির লিটার কম্পোস্ট হয়ে পাড়ের সবজিতে যায়; হাঁসের বিষ্ঠা পুকুরে প্ল্যাঙ্কটন বানায়; পুকুরের তলার কাদা পাড়ের সবজিতে যায়।">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <!-- flows -->
+      <path class="flow" d="M660,56 V26 H100 V52" marker-end="url(#ah)"/>
+      <text class="l-a" x="380" y="19">কাঁচা ঘাস</text>
+      <line class="flow" x1="180" y1="82" x2="298" y2="82" marker-end="url(#ah)"/>
+      <text class="l-a" x="239" y="74">গোবর</text>
+      <line class="flow" x1="460" y1="82" x2="578" y2="82" marker-end="url(#ah)"/>
+      <text class="l-a" x="519" y="74">স্লারি (সার)</text>
+      <line class="flow" x1="180" y1="166" x2="298" y2="166" marker-end="url(#ah)"/>
+      <text class="l-a" x="239" y="158">লিটার</text>
+      <line class="flow" x1="460" y1="166" x2="578" y2="166" marker-end="url(#ah)"/>
+      <text class="l-a" x="519" y="158">জৈব সার</text>
+      <line class="flow" x1="180" y1="250" x2="578" y2="250" marker-end="url(#ah)"/>
+      <text class="l-a" x="379" y="242">বিষ্ঠা → প্ল্যাঙ্কটন → মাছের খাবার</text>
+      <line class="flow" x1="660" y1="224" x2="660" y2="194" marker-end="url(#ah)"/>
+      <text class="l-a" x="705" y="214">তলার কাদা</text>
+
+      <!-- nodes -->
+      <g class="n-cattle"><rect x="20" y="56" width="160" height="52" rx="6"/><text class="l-t" x="100" y="79">গরু</text><text class="l-s" x="100" y="98">মোটাতাজাকরণ, ৬–৮টি</text></g>
+      <g class="n-hen"><rect x="20" y="140" width="160" height="52" rx="6"/><text class="l-t" x="100" y="163">মুরগি</text><text class="l-s" x="100" y="182">সোনালি, ~১০০০টি</text></g>
+      <g class="n-duck"><rect x="20" y="224" width="160" height="52" rx="6"/><text class="l-t" x="100" y="247">হাঁস (পরে)</text><text class="l-s" x="100" y="266">২০–৩০টি, ডিমের জন্য</text></g>
+      <g class="n-proc"><rect x="300" y="56" width="160" height="52" rx="6"/><text class="l-t" x="380" y="79">বায়োগ্যাস</text><text class="l-s" x="380" y="98">গ্যাস → চুলা, আলো</text></g>
+      <g class="n-proc"><rect x="300" y="140" width="160" height="52" rx="6"/><text class="l-t" x="380" y="163">কম্পোস্ট</text><text class="l-s" x="380" y="182">কেঁচো সার</text></g>
+      <g class="n-green"><rect x="580" y="56" width="160" height="52" rx="6"/><text class="l-t" x="660" y="79">নেপিয়ার ঘাস</text><text class="l-s" x="660" y="98">পাকচং জাত</text></g>
+      <g class="n-green"><rect x="580" y="140" width="160" height="52" rx="6"/><text class="l-t" x="660" y="163">পাড়ের সবজি ও ফল</text><text class="l-s" x="660" y="182">লাউ, শিম, কলা, পেঁপে</text></g>
+      <g class="n-pond"><rect x="580" y="224" width="160" height="52" rx="6"/><text class="l-t" x="660" y="247">পুকুর</text><text class="l-s" x="660" y="266">রুই, কাতলা, মৃগেল…</text></g>
+    </svg>
+    </div>
+    <figcaption>তীরের ওপর লেখা আছে কী যায়। মুরগির লিটার সরাসরি পুকুরে দেবেন না — রোগ ও ওষুধ (অ্যান্টিবায়োটিক) পানিতে চলে যায়; আগে কম্পোস্ট করে তারপর পাড়ে দিন।</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>প্রতিটা খামার কীভাবে শুরু করবেন</h2>
+  <p>শেডগুলো বড় করে বানান, কিন্তু শুরু করুন ছোট — প্রথম বছরটা শেখার বছর।</p>
+  <div class="ents">
+
+    <article class="ent">
+      <header><span class="sw pond"></span><h3>মাছ চাষ</h3><span class="chip now">প্রথম বছর</span></header>
+      <dl>
+        <div><dt>জায়গা</dt><dd>বড় প্লটের পূর্বে — পানি ~১৫ শতাংশ (~৪৭ × ১৪১ ফুট), গভীরতা ৫–৬ ফুট। পাড় শেষ বড় বন্যার পানি থেকে ১–২ ফুট উঁচু।</dd></div>
+        <div><dt>শুরু</dt><dd>রুই, কাতলা, মৃগেল, সিলভার কার্প, গ্রাস কার্প মিশিয়ে (মিশ্র চাষ) — সবচেয়ে কম ঝুঁকি। ৪–৬ ইঞ্চি পোনা, শতাংশপ্রতি ~৩০–৪০টি → মোট ~৪৫০–৬০০টি।</dd></div>
+        <div><dt>খাবার</dt><dd>প্যাকেট খাবার + নেপিয়ারের পাতা (গ্রাস কার্প খায়) + স্লারিতে হওয়া প্ল্যাঙ্কটন।</dd></div>
+        <div><dt>যত্ন</dt><dd>খোঁড়ার পর শতাংশপ্রতি ~১ কেজি চুন, ৫–৭ দিন পর সার। পানি হালকা সবুজ থাকলে প্ল্যাঙ্কটন ঠিক আছে।</dd></div>
+        <div><dt>মনে রাখুন</dt><dd>বন্যায় মাছ বেরিয়ে যায় — পাড় উঁচু করুন, চারপাশে জাল দিন। পরে পাবদা, গুলশা, শিং — দাম বেশি, কিন্তু অভিজ্ঞতা লাগে।</dd></div>
+      </dl>
+    </article>
+
+    <article class="ent">
+      <header><span class="sw cattle"></span><h3>গরুর খামার</h3><span class="chip now">প্রথম বছর</span></header>
+      <dl>
+        <div><dt>জায়গা</dt><dd>শেড ৩৬ × ২৪ ফুট, গেটের দক্ষিণে, গাছের ছায়ায়। পাকা মেঝে, ঢাল দিয়ে গোবর সরাসরি বায়োগ্যাসে যাবে।</dd></div>
+        <div><dt>শুরু</dt><dd>জানুয়ারি ২০২৭-এ ৪–৫টি দেড়–দুই বছরের দেশি/শংকর ষাঁড়; ~৪ মাস মোটাতাজা করে কোরবানিতে বিক্রি। শেডে ৬–৮টির জায়গা আছে।</dd></div>
+        <div><dt>খাবার</dt><dd>খড় (ধানের নাড়া), নেপিয়ার, দানা (গমের ভুসি, খৈল, ভুট্টা ভাঙা), পরিষ্কার পানি।</dd></div>
+        <div><dt>যত্ন</dt><dd>কেনার পর কৃমিনাশক। খুরারোগ (FMD), লাম্পি স্কিন, তড়কা — উপজেলা প্রাণিসম্পদ অফিসের টিকার সময়সূচি মেনে।</dd></div>
+        <div><dt>মনে রাখুন</dt><dd>স্টেরয়েড বা "মোটা করার ওষুধ" কখনো না — আইনে নিষিদ্ধ, গরু মারা যেতে পারে, মানুষেরও ক্ষতি।</dd></div>
+      </dl>
+    </article>
+
+    <article class="ent">
+      <header><span class="sw hen"></span><h3>মুরগির খামার</h3><span class="chip now">প্রথম বছর</span></header>
+      <dl>
+        <div><dt>জায়গা</dt><dd>শেড ৬০ × ২২ ফুট, উত্তরের গাছের ছায়ায়, লম্বা দিক পূর্ব-পশ্চিম। মেঝে বন্যার পানি থেকে ২–৩ ফুট উঁচু; পাশের দেয়াল ১–১.৫ ফুট পাকা + জাল + পর্দা।</dd></div>
+        <div><dt>শুরু</dt><dd>মার্চ ২০২৭-এ ৫০০ সোনালি — শেখার ব্যাচ। ঠিক চললে পরের ব্যাচ ১০০০। ~২ মাসে বিক্রি।</dd></div>
+        <div><dt>খাবার</dt><dd>কোম্পানির ফিড (স্টার্টার → গ্রোয়ার), পরিষ্কার পানি, প্রথম ২ সপ্তাহ ব্রুডিংয়ে তাপ।</dd></div>
+        <div><dt>যত্ন</dt><dd>রানীক্ষেত, গামবোরো, বসন্তের টিকা। ব্যাচ শেষে শেড ধুয়ে ২ সপ্তাহ খালি রাখুন (অল-ইন, অল-আউট)।</dd></div>
+        <div><dt>মনে রাখুন</dt><dd>ব্রয়লার ৩০–৩৫ দিনে হয়, কিন্তু দাম ওঠানামা ও রোগের ঝুঁকি বেশি — শুরুতে সোনালি নিরাপদ। কোম্পানির কন্ট্রাক্ট ফার্মিংও দেখতে পারেন।</dd></div>
+      </dl>
+    </article>
+
+    <article class="ent">
+      <header><span class="sw duck"></span><h3>হাঁসের খামার</h3><span class="chip">পরে · দ্বিতীয় ধাপ</span></header>
+      <dl>
+        <div><dt>জায়গা</dt><dd>পুকুরের দক্ষিণ মাথায় মাচা-ঘর — মুরগি জোন থেকে ~৩০ মিটার দূরে।</dd></div>
+        <div><dt>শুরু</dt><dd>২০–৩০টি খাকি ক্যাম্পবেল বা জিনডিং — ডিমের জন্য।</dd></div>
+        <div><dt>খাবার</dt><dd>পুকুরের শামুক-পোকা + কিছু দানা; হাঁসের বিষ্ঠা পুকুরে প্ল্যাঙ্কটন বানায়।</dd></div>
+        <div><dt>যত্ন</dt><dd>ডাক প্লেগ ও ডাক কলেরার টিকা (উপজেলা অফিস থেকে)।</dd></div>
+        <div><dt>মনে রাখুন</dt><dd>হাঁস লক্ষণ ছাড়াই বার্ড ফ্লু বহন করতে পারে — মুরগি আর হাঁসের দেখাশোনা আলাদা লোক, আলাদা জুতা দিয়ে।</dd></div>
+      </dl>
+    </article>
+
+  </div>
+</section>
+
+<section>
+  <h2>সময়সূচি: এখন থেকে কোরবানি ২০২৭</h2>
+  <ol class="timeline">
+    <li><time>সেপ্টেম্বর – অক্টোবর ২০২৬</time><div><h3>কাগজ, মাপ ও পরামর্শ</h3><p>পর্চা/খতিয়ান, নামজারি, খাজনা হালনাগাদ করুন; আপনার মাপ আমিন দিয়ে মিলিয়ে নিন। বড় প্লটের সাদা জিনিসটা কী, নিশ্চিত হোন। এলাকার বয়স্কদের কাছ থেকে জেনে নিন শেষ বড় বন্যায় এই জমিতে কত পানি উঠেছিল। উপজেলা প্রাণিসম্পদ ও মৎস্য অফিসে পরিকল্পনা দেখান, খামার নিবন্ধন করুন, প্রশিক্ষণ নিন। পল্লী বিদ্যুতে লাইনের আবেদন।</p></div></li>
+    <li><time>নভেম্বর ২০২৬ – জানুয়ারি ২০২৭</time><div><h3>মাটির কাজ (শুকনো মৌসুম)</h3><p>পুকুরের জায়গা (পূর্ব অংশ) খোলা, তাই খোঁড়া সহজ। পশ্চিমে শুধু শেডের জায়গার গাছ কাটুন, বাকি রাখুন। পুকুরের মাটি দিয়ে শেডের মেঝে ও রাস্তা উঁচু। সীমানা বেড়া, টিউবওয়েল।</p></div></li>
+    <li><time>ডিসেম্বর ২০২৬ – জানুয়ারি ২০২৭</time><div><h3>গরুর শেড + বায়োগ্যাস</h3><p>শেড, গোবরের ঢাল ও বায়োগ্যাস প্ল্যান্ট। জানুয়ারির শুরুতে ৪–৫টি ষাঁড় কিনুন — কোরবানি পর্যন্ত ~৪ মাস পাবে।</p></div></li>
+    <li><time>ফেব্রুয়ারি – মার্চ ২০২৭</time><div><h3>মুরগির শেড, প্রথম ব্যাচ</h3><p>শেড, বেড়া, ফুটবাথ। মার্চে ৫০০ সোনালি — টিকা, খাবার, মৃত্যুহার সব লিখে রাখুন।</p></div></li>
+    <li><time>মার্চ – মে ২০২৭</time><div><h3>পুকুর তৈরি, পোনা ছাড়া</h3><p>চুন, সার, পানি ভরা (টিউবওয়েল বা বর্ষা)। এপ্রিল–মে-তে পোনা ছাড়ুন। বর্ষার আগে পুকুরের পাড়ে ও নেপিয়ার প্লটে কাটিং লাগান।</p></div></li>
+    <li class="eid"><time>~১৬–১৭ মে ২০২৭</time><div><h3>কোরবানির ঈদ</h3><p>গরু বিক্রি (তারিখ চাঁদ দেখার ওপর নির্ভর)। খাতা মিলিয়ে দেখুন কোন খাতে লাভ, তারপর পরের বছর কোনটা বাড়াবেন ঠিক করুন।</p></div></li>
+  </ol>
+</section>
+
+<section>
+  <h2>সতর্ক থাকুন</h2>
+  <ul class="cautions">
+    <li><b>কলেজের পাশে।</b> গন্ধ, মাছি, শব্দ নিয়ে অভিযোগ আসতে পারে। গরুর শেড কলেজ থেকে ~৩০ মিটার, মুরগির শেড ~৫০ মিটার দূরে রেখেছি; গোবর-লিটার খোলা জমিয়ে রাখবেন না, কম্পোস্ট ঢেকে রাখুন। শুরুর আগে কলেজ কর্তৃপক্ষ ও প্রতিবেশীদের সাথে কথা বলে নিন।</li>
+    <li><b>বন্যা ও পাহাড়ি ঢল।</b> এই অঞ্চলে বর্ষায় হঠাৎ পানি আসতে পারে। শেডের মেঝে শেষ বড় বন্যার পানির ২–৩ ফুট ওপরে, পুকুরের পাড় ১–২ ফুট ওপরে, আর পাড়ের ওপর জাল।</li>
+    <li><b>রোগবালাই ঠেকানো (বায়োসিকিউরিটি)।</b> মুরগি জোনে বাইরের লোক নয়; গেটে ফুটবাথ। মরা মুরগি মাটিতে পুঁতে ফেলুন — পুকুরে বা খোলা জায়গায় নয়।</li>
+    <li><b>একসাথে সব নয়।</b> প্রথম বছর মাছ + গরু + একটা ছোট মুরগির ব্যাচ। মুরগি ২৪ ঘণ্টা নজর চায় — শিখে তারপর বাড়ানো।</li>
+    <li><b>দেখাশোনা।</b> আপনি দূরে থাকলে একজন বিশ্বস্ত পূর্ণকালীন খামারি লাগবে। প্রতিদিন খরচ-আয়ের খাতা রাখুন — কোন খাতে লাভ, খাতা ছাড়া বোঝা যায় না।</li>
+  </ul>
+</section>
+
+<section class="ask">
+  <h2>পরিকল্পনা পাকা করতে যা জানা দরকার</h2>
+  <ol>
+    <li>বড় প্লটের পশ্চিম কিনারায়, গেটের একটু দক্ষিণে গাছের মাঝে একটা ছোট সাদা জিনিস দেখা যাচ্ছে (নকশায় লাল "?") — ওটা কী? ঘর, কবর, নাকি টিউবওয়েল?</li>
+    <li>শুরুতে মোটামুটি কত টাকা বিনিয়োগ করতে চান?</li>
+    <li>আপনি নিজে থাকবেন, নাকি খামারি রেখে চালাবেন?</li>
+    <li>গাছগুলো কী — ফলের বাগান, কাঠগাছ, নাকি বাঁশ?</li>
+    <li>শেষ বড় বন্যায় এই জমিতে পানি উঠেছিল? কত ফুট?</li>
+    <li>বিদ্যুতের লাইন আর টিউবওয়েল আছে?</li>
+  </ol>
+  <p>এগুলো জানালে টাকার হিসাব (বাজেট) আর মাসভিত্তিক কাজের তালিকা বানিয়ে দিতে পারব।</p>
+</section>
+
+<footer>
+  <span>১ শতাংশ (ডেসিমাল) = ৪৩৫.৬ বর্গফুট ≈ ৪০.৫ m² · ১ একর = ১০০ শতাংশ · ১ বিঘা ≈ ৩৩ শতাংশ (এলাকাভেদে আলাদা)</span>
+  <span>খসড়া পরিকল্পনা — উপজেলা প্রাণিসম্পদ ও মৎস্য কর্মকর্তার সাথে মিলিয়ে নিন।</span>
+</footer>
+
+</div>
