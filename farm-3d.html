@@ -334,7 +334,7 @@ scene.add(sky);
 
 scene.add(new THREE.HemisphereLight('#dfe8f0', '#5b6a3a', 1.25));
 const sun = new THREE.DirectionalLight('#fff1dc', 2.7);
-const SHADOW_C = new THREE.Vector3(-45, 0, 55);   // covers the farm, the college and the bazar junction
+const SHADOW_C = new THREE.Vector3(-45, 0, 55);   // covers the farm, the madrasa, the college and the bazar junction
 sun.position.copy(SHADOW_C).addScaledVector(sunDir, 240);
 sun.target.position.copy(SHADOW_C);
 sun.castShadow = true;
@@ -515,7 +515,7 @@ function fieldsTexture() {
     g.closePath(); g.fill();
   };
   const P = (o, d1, t1, d2, t2) => o.clone().addScaledVector(d1, t1).addScaledVector(d2, t2);
-  // open neighbour land on both sides of the access lane, and the college yard
+  // open neighbour land on both sides of the access lane, and the madrasa and college yards
   g.fillStyle = '#8b9955';
   g.fillRect(px(-60), pz(-10), 59 * k, 37 * k);
   g.fillRect(px(-60), pz(32.6), 59 * k, 23 * k);
@@ -871,8 +871,8 @@ function person(shirt, lungi) {
 
 // ---------------------------------------------------------------------------
 // Surroundings, laid out from the user's Google Maps screenshots: Z4606 with
-// Nilakshmia bazar, the Sreebardi road leaving it at a junction, the college
-// and madrasa beside the small plot, the mosque, and paddy to the east and south.
+// Nilakshmia bazar, the Sreebardi road leaving it at a junction, the madrasa west
+// of the small plot and the college south of it, the mosque, and paddy to the east and south.
 // ---------------------------------------------------------------------------
 {
   const asphaltMat = new THREE.MeshStandardMaterial({ map: asphaltTexture(), roughness: 0.95 });
@@ -896,7 +896,7 @@ function person(shirt, lungi) {
   strip(J, ROAD_DIR, 600, 9, shoulderMat, 0.03);
   strip(J, ROAD_DIR, 600, 5, asphaltMat, 0.065);
   strip(W0, W_DIR, 260, 4, brickRoadMat, 0.04);
-  // the college lane off Z4606
+  // the lane off Z4606 to the madrasa and the college
   const c1 = new THREE.Vector3(-83, 0, 111), c2 = new THREE.Vector3(-40, 0, 100), c3 = new THREE.Vector3(-39, 0, 124);
   lane(c1, c2, 3, brickRoadMat, 0.04);
   lane(c2, c3, 3, brickRoadMat, 0.045);
@@ -955,10 +955,11 @@ function mosque(cx, cz, rot) {
   put(paintMat(green), new THREE.ConeGeometry(0.12, 1.4, 8), at(8.2, 17.6, -8.2));
 }
 
-// Nilakhia Public College / Jabale Nur Nurani Model Madrasa (footprints read off the satellite image)
+// Jabale Nur Nurani Model Madrasa: the three long blocks west of the small plot (footprints read off the satellite image)
 building({ cx: -40, cz: 61, L: 44, D: 8, h: 3.4, roof: '#c3ccd1' });
 building({ cx: -62, cz: 76, L: 44, D: 8, h: 3.4, roof: '#aebdc6' });
 building({ cx: -63, cz: 90, L: 46, D: 8, h: 3.6, roof: '#d4dadd' });
+// Nilakhia Public College: the red-roofed block just south of the small plot (the user pointed it out)
 building({ cx: 12, cz: 94, L: 26, D: 9, h: 4, roof: '#c0613a' });
 // Makbul Master Market and the mosque on the west side of Z4606
 const MARKET = J.clone().addScaledVector(Z_DIR, 61.5).addScaledVector(Z_N, -13.25);
@@ -985,7 +986,7 @@ mosque(MOSQUE.x, MOSQUE.z, alongRoad(Z_DIR));
       if (r() > (far < 110 ? 0.93 : far < 190 ? 0.6 : 0.28)) continue;
       if (side < 0 && tc > 42 && tc < 81) continue;      // the market building
       if (side < 0 && tc > -100 && tc < -76) continue;   // the mosque
-      if (side > 0 && tc > -12 && tc < 32) continue;     // junction and the college lane
+      if (side > 0 && tc > -12 && tc < 32) continue;     // junction and the madrasa lane
       const D = 8 + r() * 7, two = r() < (far < 90 ? 0.45 : 0.15);
       const c = J.clone().addScaledVector(Z_DIR, tc).addScaledVector(Z_N, side * (5.75 + D / 2));
       if (clash(c, Math.max(L, D) / 2)) continue;
@@ -1008,7 +1009,7 @@ const treeSpots = [];
 {
   const r = rng(99);
   const onLand = (x, z, pad) => LAND.some(([x0, z0, x1, z1]) => x > x0 - pad && x < x1 + pad && z > z0 - pad && z < z1 + pad);
-  const inCollege = (x, z) => x > -92 && x < 32 && z > 52 && z < 112;
+  const inSchoolGrounds = (x, z) => x > -92 && x < 32 && z > 52 && z < 112;   // the madrasa and the college
   const tree = (x, z, big = 1) => treeSpots.push({ x, z, h: (6 + r() * 7) * big, rad: (2.2 + r() * 2.6) * big });
   const houses = [];
   // village behind the bazar: west of Z4606 and north-west of the Sreebardi road
@@ -1025,7 +1026,7 @@ const treeSpots = [];
     if (roadS(x, z) < 6 || onLand(x, z, 4)) continue;
     tree(x, z); n++;
   }
-  // a few trees in the college yard
+  // a few trees in the madrasa yard
   for (let n = 0, tries = 0; n < 9 && tries < 500; tries++) {
     const x = -90 + r() * 70, z = 97 + r() * 14;
     if (nearRoad(x, z, 3) || Math.abs(z - 100 - (x + 40) * -0.256) < 3) continue;
@@ -1034,7 +1035,7 @@ const treeSpots = [];
   // lone trees on field bunds
   for (let n = 0, tries = 0; n < 32 && tries < 3000; tries++) {
     const x = CENTER.x - 300 + r() * 600, z = CENTER.z - 300 + r() * 600;
-    if (isVillage(x, z) || nearRoad(x, z, 8) || inCollege(x, z) || Math.hypot(x - CENTER.x, z - CENTER.z) < 110) continue;
+    if (isVillage(x, z) || nearRoad(x, z, 8) || inSchoolGrounds(x, z) || Math.hypot(x - CENTER.x, z - CENTER.z) < 110) continue;
     tree(x, z, 0.9); n++;
   }
   // village clumps on the horizon
@@ -1105,7 +1106,8 @@ function addLabel(html, pos, kind = 'place', max = 650, min = 0) {
   LABELS.push({ el, pos, center: kind === 'road', max, min });
 }
 addLabel('নিলক্ষিয়া খামার', new THREE.Vector3(28, 12, 28), 'farm', 650, 150);
-addLabel('নিলক্ষিয়া পাবলিক কলেজ<small>জাবালে নূর নূরানী মডেল মাদরাসা</small>', new THREE.Vector3(-25, 6, 60));
+addLabel('জাবালে নূর নূরানী মডেল মাদরাসা', new THREE.Vector3(-50, 6, 72));
+addLabel('নিলক্ষিয়া পাবলিক কলেজ', new THREE.Vector3(12, 7.5, 94));
 addLabel('মকবুল মাস্টার মার্কেট', MARKET.clone().setY(9.5));
 addLabel('নিলক্ষিয়া বাজার', J.clone().addScaledVector(Z_DIR, -24).setY(9));
 addLabel('মসজিদ', MOSQUE.clone().setY(19));
@@ -1692,7 +1694,7 @@ const COW_SPOTS = [];
     if (row.ry !== 0) OBSTACLES.push([row.manger[0] - 0.1, zA, row.stall[1] + 0.1, zB]);
   }
   OBSTACLES.push([-7.65, zA, -6.45, zB]);     // shared dung channel, keep the walker in the alleys
-  // west wall solid (towards the college), the rest on posts
+  // west wall solid (towards the madrasa), the rest on posts
   fbox(M.brickRed, 0.25, eave, z1 - z0, x0 + 0.12, eave / 2, (z0 + z1) / 2);
   for (const x of [-13.9, -6.2, 1.9, x1 - 0.15]) for (let z = z0 + 0.3; z <= z1 - 0.2; z += 3.1) fbox(M.plainConcrete, 0.25, eave, 0.25, x, eave / 2, z);
   for (const x of [-13.9, -6.2, 1.9, x1 - 0.15]) fbox(M.steel, 0.2, 0.3, z1 - z0, x, eave - 0.15, (z0 + z1) / 2);   // beams
