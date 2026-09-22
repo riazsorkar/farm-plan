@@ -31,9 +31,10 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
 .title { top: calc(14px + env(safe-area-inset-top, 0px)); left: 14px; padding: 12px 16px 14px; max-width: min(360px, calc(100vw - 28px)); }
 .title .step { font-weight: 600; font-size: 13px; color: var(--mustard); }
 .title h1 { font: 700 24px/1.35 var(--display); margin: 2px 0 4px; }
-.title p { margin: 0; color: var(--muted); font-size: 14px; }
 
 .info { top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px; width: 340px; max-height: calc(100% - 130px); overflow: auto; }
+.info:not([open]) { width: auto; }
+.info .lead { margin: 0; font-size: 14px; line-height: 1.55; }
 .info summary { cursor: pointer; list-style: none; padding: 12px 16px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .info summary::-webkit-details-marker { display: none; }
 .info summary::after { content: "▾"; color: var(--muted); transition: transform .2s; }
@@ -69,9 +70,11 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
 .compass .n { fill: var(--mustard); }
 .compass .s { fill: var(--muted); opacity: .6; }
 .compass text { fill: var(--mustard); font: 700 9px var(--sans); }
-.hint { font-size: 13px; color: var(--muted); max-width: 250px; line-height: 1.45; }
+/* how to move around: folded behind the "?" button, opens above the corner panel */
+.hint { position: absolute; left: 0; bottom: calc(100% + 8px); width: max-content; max-width: min(300px, calc(100vw - 28px)); padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(17, 24, 19, .9); box-shadow: 0 10px 30px rgba(0, 0, 0, .22); font-size: 13px; line-height: 1.5; color: var(--ink); }
 .names { font: 600 13px/1 var(--sans); color: var(--ink); background: rgba(255, 255, 255, .08); border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; cursor: pointer; }
-.names[aria-pressed="true"] { background: var(--mustard); color: #221c0b; border-color: transparent; }
+.names[aria-pressed="true"], .names[aria-expanded="true"] { background: var(--mustard); color: #221c0b; border-color: transparent; }
+.names.help { min-width: 34px; }
 .names:focus-visible { outline: 2px solid var(--mustard); outline-offset: 2px; }
 
 /* place names over the scene, styled like map pins */
@@ -107,11 +110,9 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
 @media (max-width: 760px) {
   .title { padding: 10px 12px; max-width: calc(100vw - 150px); }
   .title h1 { font-size: 19px; }
-  .title p { display: none; }
   .info { right: 10px; width: auto; max-width: calc(100vw - 20px); }
   .info[open] { left: 10px; max-height: calc(100% - 170px); }
   .corner { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); left: 10px; padding: 6px; }
-  .corner .hint { display: none; }
   .views button { padding: 10px 11px; font-size: 14px; }
   .pad { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); right: 10px; }
 }
@@ -124,12 +125,12 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
 <section class="hud card title">
   <div class="step">ধাপ ৩ · পুরো খামার</div>
   <h1>নিলক্ষিয়া খামার</h1>
-  <p>মাস্টার প্ল্যান অনুযায়ী: পুকুরে মাছ, খাঁচায় মুরগি, শেডে গরু, পাশে বাড়ি — সব চলছে।</p>
 </section>
 
-<details class="hud card info" id="info" open>
+<details class="hud card info" id="info">
   <summary>এই ধাপে যা আছে</summary>
   <div class="body">
+    <p class="lead">মাস্টার প্ল্যান অনুযায়ী: পুকুরে মাছ, খাঁচায় মুরগি, শেডে গরু, পাশে বাড়ি — সব চলছে।</p>
     <dl class="facts">
       <div><dt>বাড়ি</dt><dd>ডুপ্লেক্স ১২ × ১২ মিটার, পুকুরের পাশে — পুকুরমুখী বারান্দা, ছাদে সোলার, সামনে ঘাট; গাড়ি বারান্দায় গাড়ি</dd></div>
       <div><dt>পুকুর</dt><dd>পূর্ব দেয়াল বরাবর, পানি ৩৩ × ১৫৫ ফুট, ৬–৭ ফুট গভীর; দুটো প্যাডেল অ্যারেটর ঘুরছে, নিচে মাছ সাঁতার কাটছে</dd></div>
@@ -168,9 +169,10 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
       <text x="23" y="9" text-anchor="middle">উ</text>
     </g>
   </svg>
-  <div class="hint" id="hint">টেনে ঘোরান · স্ক্রল করে কাছে-দূরে · ডান-ক্লিক টেনে সরান</div>
+  <div class="hint" id="hint" hidden>টেনে ঘোরান · স্ক্রল করে কাছে-দূরে · ডান-ক্লিক টেনে সরান</div>
   <button type="button" class="names" id="names" aria-pressed="true">নাম</button>
   <button type="button" class="names" id="roofs" aria-pressed="true">ছাদ</button>
+  <button type="button" class="names help" id="help" aria-expanded="false" aria-controls="hint" aria-label="কীভাবে ঘোরাবেন" title="কীভাবে ঘোরাবেন">?</button>
 </div>
 
 <div class="hud card pad" id="pad" hidden>
@@ -204,7 +206,6 @@ const QUALITY = (() => { try { return new URLSearchParams(location.search).get('
 const LITE = QUALITY === 'low' || (QUALITY !== 'high' && (TOUCH || Math.min(screen.width, screen.height) < 700));
 document.documentElement.classList.toggle('lite', LITE);
 const DOTS = LITE ? 0.5 : 1;                            // share of the speckles painted into each texture
-if (matchMedia('(max-width: 760px)').matches) $('#info').open = false;
 
 function rng(seed) {
   return () => {
@@ -2070,6 +2071,16 @@ const HINTS = {
   walk: TOUCH ? 'বোতাম দিয়ে হাঁটুন · আঙুল টেনে চারদিকে দেখুন' : 'W A S D বা ↑ ↓ দিয়ে হাঁটুন · ← → ঘুরুন · মাউস টেনে চারদিকে দেখুন · Shift চেপে দৌড়',
 };
 $('#hint').textContent = HINTS.orbit;
+// the help stays folded behind "?"; walking opens it for a few seconds, since the controls change
+const helpBtn = $('#help'), hintEl = $('#hint');
+let hintTimer = 0;
+function showHint(on, forMs = 0) {
+  clearTimeout(hintTimer);
+  hintEl.hidden = !on;
+  helpBtn.setAttribute('aria-expanded', String(on));
+  if (on && forMs) hintTimer = setTimeout(() => showHint(false), forMs);
+}
+helpBtn.addEventListener('click', () => showHint(hintEl.hidden));
 
 function setWalk(on) {
   walker.on = on;
@@ -2077,6 +2088,7 @@ function setWalk(on) {
   controls.enabled = !on;
   $('#pad').hidden = !(on && TOUCH);
   $('#hint').textContent = on ? HINTS.walk : HINTS.orbit;
+  showHint(on, 6000);
   walkBtn.textContent = on ? 'হাঁটা থামান' : 'হেঁটে দেখুন';
   const dir = new THREE.Vector3();
   if (on) {
