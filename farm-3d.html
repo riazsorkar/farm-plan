@@ -52,6 +52,12 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
 .info a { color: var(--mustard); }
 
 .views { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; max-width: calc(100vw - 20px); overflow-x: auto; }
+.views { scrollbar-width: none; }
+.views::-webkit-scrollbar { display: none; }
+/* fade the edge that has more buttons past it */
+.views.more-r { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+.views.more-l { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); }
+.views.more-l.more-r { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }
 .views button { font: 600 14.5px/1 var(--sans); color: var(--ink); background: transparent; border: 0; border-radius: 10px; padding: 11px 15px; cursor: pointer; white-space: nowrap; }
 .views button:hover { background: rgba(255, 255, 255, .09); }
 .views button[aria-pressed="true"] { background: var(--mustard); color: #221c0b; }
@@ -88,6 +94,9 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
 .pad .left { grid-column: 1; grid-row: 2; }
 .pad .down { grid-column: 2; grid-row: 2; }
 .pad .right { grid-column: 3; grid-row: 2; }
+
+/* lite (phones): a live blur over a moving 3D scene costs a lot, so the panels are just darker */
+.lite .card { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(17, 24, 19, .86); }
 
 .loading, .msg { position: fixed; inset: 0; display: grid; place-items: center; z-index: 1; color: #1d261f; font: 600 16px var(--sans); text-align: center; padding-inline: 24px; }
 .msg { z-index: 5; background: var(--sky); }
@@ -175,7 +184,7 @@ body { margin: 0; background: var(--sky); color: var(--ink); font: 15px/1.6 var(
 
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 } }
 </script>
@@ -189,6 +198,12 @@ const $ = (s) => document.querySelector(s);
 const bn = (n) => Math.round(n).toLocaleString('bn-BD');
 const TOUCH = matchMedia('(pointer: coarse)').matches;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Phones and tablets get a lighter scene: fewer grass blades, a smaller field texture, shadows drawn once,
+// a lower resolution and 30 fps while nobody touches it. ?q=high or ?q=low forces either way.
+const QUALITY = (() => { try { return new URLSearchParams(location.search).get('q'); } catch { return null; } })();
+const LITE = QUALITY === 'low' || (QUALITY !== 'high' && (TOUCH || Math.min(screen.width, screen.height) < 700));
+document.documentElement.classList.toggle('lite', LITE);
+const DOTS = LITE ? 0.5 : 1;                            // share of the speckles painted into each texture
 if (matchMedia('(max-width: 760px)').matches) $('#info').open = false;
 
 function rng(seed) {
@@ -280,10 +295,12 @@ try {
   $('#msg').hidden = false; $('#loading').hidden = true;
   throw err;
 }
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, TOUCH ? 1.5 : 2));
+let pixelRatio = Math.min(window.devicePixelRatio || 1, LITE ? 1.25 : 2);
+renderer.setPixelRatio(pixelRatio);
 renderer.setSize(stage.clientWidth, stage.clientHeight, false);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = LITE ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+if (LITE) renderer.shadowMap.autoUpdate = false;     // the sun never moves: draw the shadows once, again when the roofs change
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.62;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -293,6 +310,13 @@ const ANISO = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog('#d2dbd9', 170, 760);
 const camera = new THREE.PerspectiveCamera(50, stage.clientWidth / stage.clientHeight, 0.25, 3000);
+// an upright phone would see only a ~24° slice; widen the view so it still sees about 40° across
+function fitFov() {
+  const a = camera.aspect;
+  camera.fov = a < 1 ? THREE.MathUtils.clamp(THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(20)) / a)), 50, 75) : 50;
+  camera.updateProjectionMatrix();
+}
+fitFov();
 
 // sky and a mid-afternoon sun from the south-west
 const sunDir = (() => {
@@ -314,7 +338,7 @@ const SHADOW_C = new THREE.Vector3(-45, 0, 55);   // covers the farm, the colleg
 sun.position.copy(SHADOW_C).addScaledVector(sunDir, 240);
 sun.target.position.copy(SHADOW_C);
 sun.castShadow = true;
-sun.shadow.mapSize.set(TOUCH ? 2048 : 4096, TOUCH ? 2048 : 4096);
+sun.shadow.mapSize.set(LITE ? 2048 : 4096, LITE ? 2048 : 4096);
 Object.assign(sun.shadow.camera, { left: -150, right: 150, top: 150, bottom: -150, near: 30, far: 520 });
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.04;
@@ -354,7 +378,7 @@ function brickTextures() {
       b.fillStyle = `rgb(${g},${g},${g})`; b.fillRect(x, y, w, h);
     }
   }
-  for (let i = 0; i < 9000; i++) {
+  for (let i = 0; i < 9000 * DOTS; i++) {
     const x = r() * W, y = r() * H, a = r() * 0.2;
     c.fillStyle = r() < 0.55 ? `rgba(40,18,8,${a})` : `rgba(255,236,210,${a * 0.7})`;
     c.fillRect(x, y, 1.6, 1.6);
@@ -372,7 +396,7 @@ function plasterTexture() {
     g.addColorStop(0, `rgba(90,80,65,${0.08 + r() * 0.08})`); g.addColorStop(1, 'rgba(90,80,65,0)');
     c.fillStyle = g; c.fillRect(x - rad, y - rad, rad * 2, rad * 2);
   }
-  for (let i = 0; i < 7000; i++) {
+  for (let i = 0; i < 7000 * DOTS; i++) {
     c.fillStyle = r() < 0.5 ? `rgba(60,55,45,${r() * 0.18})` : `rgba(255,255,245,${r() * 0.2})`;
     c.fillRect(r() * 256, r() * 256, 1.2, 1.2);
   }
@@ -384,7 +408,7 @@ function grassTexture() {
   c.fillStyle = '#4b6829'; c.fillRect(0, 0, S, S);
   const cols = ['#577530', '#3f5b22', '#658236', '#4f6d2c', '#6f8a3a', '#40561f'];
   c.lineCap = 'round';
-  for (let i = 0; i < 16000; i++) {
+  for (let i = 0; i < 16000 * DOTS; i++) {
     const x = r() * S, y = r() * S, a = r() * Math.PI * 2, l = 3 + r() * 7;
     c.strokeStyle = cols[Math.floor(r() * cols.length)];
     c.lineWidth = 1 + r() * 1.4;
@@ -397,7 +421,7 @@ function grassTexture() {
 function asphaltTexture() {
   const [cv, c] = makeCanvas(256, 256), r = rng(3);
   c.fillStyle = '#5d5d59'; c.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 12000; i++) {
+  for (let i = 0; i < 12000 * DOTS; i++) {
     const v = 60 + Math.floor(r() * 70);
     c.fillStyle = `rgba(${v},${v},${v - 4},${0.35 + r() * 0.4})`;
     c.fillRect(r() * 256, r() * 256, 1.5, 1.5);
@@ -421,7 +445,7 @@ function solingTexture() {
       c.fillRect(col * bw + j / 2, k * bh + off + j / 2, bw - j, bh - j);
     }
   }
-  for (let i = 0; i < 9000; i++) {
+  for (let i = 0; i < 9000 * DOTS; i++) {
     c.fillStyle = r() < 0.6 ? `rgba(60,35,20,${r() * 0.22})` : `rgba(235,220,190,${r() * 0.2})`;
     c.fillRect(r() * W, r() * H, 1.6, 1.6);
   }
@@ -433,7 +457,7 @@ function concreteTexture() {
   const S = 256, r = rng(23);
   const [cv, c] = makeCanvas(S, S);
   c.fillStyle = '#bab6ad'; c.fillRect(0, 0, S, S);
-  for (let i = 0; i < 14000; i++) {
+  for (let i = 0; i < 14000 * DOTS; i++) {
     const v = 150 + Math.floor(r() * 70);
     c.fillStyle = `rgba(${v},${v - 2},${v - 6},${0.3 + r() * 0.4})`;
     c.fillRect(r() * S, r() * S, 1.4, 1.4);
@@ -466,7 +490,7 @@ function tinTexture() {
 
 // fields, village ground and yards around the land (800 × 800 m)
 function fieldsTexture() {
-  const S = 2048, M = 800, k = S / M;
+  const S = LITE ? 1024 : 2048, M = 800, k = S / M, bund = 0.625 * k;
   const [cv, g] = makeCanvas(S, S), r = rng(21);
   const px = (x) => (x - CENTER.x + M / 2) * k, pz = (z) => (z - CENTER.z + M / 2) * k;
   g.fillStyle = '#9a9165'; g.fillRect(0, 0, S, S);   // the bunds (আইল) show between plots
@@ -479,7 +503,7 @@ function fieldsTexture() {
       const roll = r();
       if (roll < 0.06) col = '#a5a85a'; else if (roll < 0.1) col = '#6e8b68';
       g.fillStyle = col;
-      g.fillRect((x + M / 2) * k + 1.6, (z + M / 2) * k + 1.6, w * k - 3.2, h * k - 3.2);
+      g.fillRect((x + M / 2) * k + bund, (z + M / 2) * k + bund, w * k - 2 * bund, h * k - 2 * bund);
       x += w;
     }
     z += h;
@@ -510,7 +534,7 @@ function fieldsTexture() {
   }
   // packed-earth frontage of Nilakshmia bazar along Z4606
   poly([P(J, Z_DIR, -280, Z_N, -24), P(J, Z_DIR, 240, Z_N, -24), P(J, Z_DIR, 240, Z_N, 22), P(J, Z_DIR, -280, Z_N, 22)], '#978b6d');
-  for (let i = 0; i < 70000; i++) {
+  for (let i = 0, n = 70000 * (S / 2048) ** 2; i < n; i++) {
     g.fillStyle = r() < 0.5 ? `rgba(30,45,15,${r() * 0.18})` : `rgba(230,225,170,${r() * 0.12})`;
     g.fillRect(r() * S, r() * S, 2, 2);
   }
@@ -605,12 +629,15 @@ const windTime = { value: 0 };
   const total = areas.reduce((a, b) => a + b, 0);
   const wallLines = OUTLINE.map((a, i) => [a, OUTLINE[(i + 1) % OUTLINE.length]]).filter((_, i) => i !== GATE_EDGE);
   const nearWall = (x, z) => wallLines.some(([[ax, az], [bx, bz]]) => {
+    // every wall runs straight along x or z, so a box test is enough
+    if (ax === bx) return Math.abs(x - ax) < 0.8 && z > Math.min(az, bz) - 0.8 && z < Math.max(az, bz) + 0.8;
+    if (az === bz) return Math.abs(z - az) < 0.8 && x > Math.min(ax, bx) - 0.8 && x < Math.max(ax, bx) + 0.8;
     const dx = bx - ax, dz = bz - az;
     const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)));
     return Math.hypot(x - (ax + dx * t), z - (az + dz * t)) < 0.8;
   });
   const onRoadEnd = (x, z) => x < 0.9 && z > 27.3 && z < 32.3;
-  const count = TOUCH ? 45000 : 120000;
+  const count = LITE ? 22000 : 120000;
   const blades = new THREE.InstancedMesh(geo, mat, count);
   const r = rng(42), o = new THREE.Object3D(), col = new THREE.Color();
   const tintA = new THREE.Color('#d9f0b0'), tintB = new THREE.Color('#ffffff'), tintC = new THREE.Color('#f2e2a0');
@@ -621,7 +648,7 @@ const windTime = { value: 0 };
       while (pick > areas[j] || areas[j] === 0) { pick -= areas[j]; j++; }
       const [x0, z0, x1, z1] = LAND[j];
       x = x0 + r() * (x1 - x0); z = z0 + r() * (z1 - z0);
-    } while (nearWall(x, z) || onRoadEnd(x, z) || inFarmNoGrass(x, z));
+    } while (onRoadEnd(x, z) || inFarmNoGrass(x, z) || nearWall(x, z));
     o.position.set(x, 0, z);
     o.rotation.set(0, r() * Math.PI * 2, 0);
     const s = 0.75 + r() * 0.55;
@@ -1945,7 +1972,7 @@ for (const [key, geos] of farmBuckets) {
 }
 let roofsOn = true;
 const roofBtn = $('#roofs');
-function setRoofs(on) { roofsOn = on; roofBtn.setAttribute('aria-pressed', String(on)); roofMeshes.forEach((m) => { m.visible = on; }); }
+function setRoofs(on) { roofsOn = on; roofBtn.setAttribute('aria-pressed', String(on)); roofMeshes.forEach((m) => { m.visible = on; }); renderer.shadowMap.needsUpdate = true; }
 roofBtn.addEventListener('click', () => setRoofs(!roofsOn));
 try { if (new URLSearchParams(location.search).get('roofs') === '0') setRoofs(false); } catch {}
 
@@ -1998,9 +2025,20 @@ const VIEWS = {
 };
 const viewButtons = [...document.querySelectorAll('[data-view]')];
 const walkBtn = $('#v-walk');
+const viewsBar = $('.views');
+function edgeFade() {
+  const { scrollLeft: l, scrollWidth: w, clientWidth: c } = viewsBar;
+  viewsBar.classList.toggle('more-l', l > 2);
+  viewsBar.classList.toggle('more-r', l + c < w - 2);
+}
+viewsBar.addEventListener('scroll', edgeFade, { passive: true });
+addEventListener('resize', edgeFade);
+edgeFade();
 function markView(name) {
   viewButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
   walkBtn.setAttribute('aria-pressed', String(name === 'walk'));
+  const on = name === 'walk' ? walkBtn : viewButtons.find((b) => b.dataset.view === name);
+  if (on && viewsBar.scrollWidth > viewsBar.clientWidth) on.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: REDUCED ? 'auto' : 'smooth' });
 }
 function place(name) {
   const v = VIEWS[name]();
@@ -2171,13 +2209,38 @@ new ResizeObserver(() => {
   if (!w || !h) return;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  camera.updateProjectionMatrix();
+  fitFov();
 }).observe(stage);
+
+// On lite devices: full frame rate while a finger is on the scene or the camera is flying, 30 fps otherwise,
+// and a lower resolution if the phone still can't keep up.
+let lastInput = -1e9, lastFrame = -1e9;
+const touched = () => { lastInput = performance.now(); };
+for (const ev of ['pointerdown', 'pointermove', 'wheel']) el.addEventListener(ev, touched, { passive: true });
+const pace = { n: 0, t: 0, skip: 3 };
+function adaptResolution(dt) {
+  pace.n++; pace.t += dt;
+  if (pace.t < 2.5) return;
+  const avg = pace.t / pace.n;
+  pace.n = 0; pace.t = 0;
+  if (pace.skip > 0) { pace.skip--; return; }                  // the first seconds include shader compiles
+  if (avg > 1 / 22 && pixelRatio > 0.75) {
+    pixelRatio = Math.max(0.75, pixelRatio - 0.25);
+    renderer.setPixelRatio(pixelRatio);
+    renderer.setSize(stage.clientWidth, stage.clientHeight, false);
+  }
+}
+
+if (renderer.compileAsync) { try { await renderer.compileAsync(scene, camera); } catch { /* compiled on first draw instead */ } }
+renderer.shadowMap.needsUpdate = true;
 
 const clock = new THREE.Clock();
 let first = true;
-renderer.setAnimationLoop(() => {
+renderer.setAnimationLoop((now) => {
+  if (LITE && !first && !tween && !walker.on && now - lastInput > 1500 && now - lastFrame < 1000 / 30 - 3) return;
+  lastFrame = now;
   const dt = Math.min(clock.getDelta(), 0.1);
+  if (LITE && !first) adaptResolution(dt);
   if (!REDUCED) windTime.value += dt;
   if (tween) {
     tween.k = Math.min(1, tween.k + dt / 1.4);

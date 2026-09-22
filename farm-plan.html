@@ -62,6 +62,25 @@ svg{display:block; width:100%; height:auto;}
 svg.site{min-width:900px;}
 svg.loop{min-width:680px;}
 
+/* phones: each drawing fits the screen, and a button opens it full screen at a readable size */
+.zoom-btn{ display:none; align-self:flex-start; align-items:center; gap:8px; font:600 14px/1 var(--sans); color:var(--water); background:none; border:1.5px solid var(--water); border-radius:999px; padding:9px 14px; cursor:pointer; }
+.zoom-btn svg, .zoom-bar svg{ display:block; width:16px; height:16px; min-width:0; }
+.zoom-btn:focus-visible, .zoom-bar button:focus-visible{ outline:2px solid var(--water); outline-offset:2px; }
+dialog.zoom{ position:fixed; inset:0; width:100%; height:100%; max-width:none; max-height:none; margin:0; padding:0; border:0; background:var(--surface); color:var(--ink); }
+dialog.zoom[open]{ display:flex; flex-direction:column; }
+dialog.zoom::backdrop{ background:var(--surface); }
+.zoom-bar{ display:flex; align-items:center; gap:8px; padding:calc(10px + env(safe-area-inset-top, 0px)) 12px 10px; border-bottom:1px solid var(--line); }
+.zoom-bar h2{ flex:1; min-width:0; margin:0; font:600 1rem/1.4 var(--sans); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.zoom-bar button{ flex:none; display:grid; place-items:center; width:44px; height:44px; border:1px solid var(--line); border-radius:10px; background:var(--ground); color:var(--ink); cursor:pointer; }
+.zoom-body{ flex:1; overflow:auto; overscroll-behavior:contain; padding:12px; background:var(--ground); }
+.zoom-body:focus{ outline:none; }
+.zoom-body > svg{ min-width:0; max-width:none; }
+@media (max-width:900px){
+  svg.site, svg.shed, svg.loop{ min-width:0; }
+  .zoom-btn{ display:inline-flex; }
+  figure svg.site, figure svg.shed, figure svg.loop{ cursor:zoom-in; }
+}
+
 /* site plan */
 .site{color:var(--ink);}
 .site .f-field{fill:var(--field);}
@@ -170,6 +189,18 @@ tr.total td{font-weight:600; background:var(--ground);}
 footer{font:14px/1.7 var(--sans); color:var(--muted); display:flex; flex-direction:column; gap:6px; padding-top:18px; border-top:1px solid var(--line);}
 
 @media (max-width:560px){
+  /* the zone table turns into one small card per row */
+  .tablewrap thead{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .tablewrap table, .tablewrap tbody, .tablewrap td{ display:block; }
+  .tablewrap tr{ display:grid; grid-template-columns:1fr auto; gap:2px 14px; padding:11px 14px; border-bottom:1px solid var(--line); }
+  .tablewrap tbody tr:last-child{ border-bottom:none; }
+  .tablewrap td{ padding:0; border:0; }
+  .tablewrap td:empty{ display:none; }
+  .tablewrap tr.total{ background:var(--ground); }
+  .tablewrap tr.total td{ background:none; }
+  .tablewrap td:first-child{ font-weight:600; }                                            /* part */
+  .tablewrap td:nth-child(2){ text-align:right; font-weight:600; }                         /* land */
+  .tablewrap td:nth-child(3){ grid-column:1 / -1; color:var(--muted); font-size:.9rem; }   /* what goes there */
   .ent dl > div{grid-template-columns:1fr; gap:2px;}
   .timeline li{grid-template-columns:1fr;}
   .ask{padding:18px;}
@@ -504,3 +535,70 @@ footer{font:14px/1.7 var(--sans); color:var(--muted); display:flex; flex-directi
 </footer>
 
 </div>
+
+<dialog class="zoom" id="zoom" aria-labelledby="zoom-title">
+  <div class="zoom-bar">
+    <h2 id="zoom-title"></h2>
+    <button type="button" data-z="out" aria-label="ছোট করুন"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button type="button" data-z="in" aria-label="বড় করুন"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    <button type="button" data-z="close" aria-label="বন্ধ করুন"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </div>
+  <div class="zoom-body" tabindex="-1" autofocus></div>
+</dialog>
+
+<script>
+// Opens a drawing full screen at a readable width, to drag around and zoom with + and −.
+(function () {
+  var BASE = { site: 900, loop: 680 };                                   // the width each kind of drawing reads well at
+  var dlg = document.getElementById('zoom');
+  if (!dlg || !dlg.showModal) return;
+  var body = dlg.querySelector('.zoom-body'), title = document.getElementById('zoom-title');
+  var small = matchMedia('(max-width: 900px)');
+  var SEL = 'figure svg.site, figure svg.shed, figure svg.loop';
+  var cur = null, spot = null, base = 0, width = 1;
+  var kind = function (svg) { for (var k in BASE) if (svg.classList.contains(k)) return k; };
+
+  function setWidth(w, keep) {
+    w = Math.max(body.clientWidth - 24, Math.min(base * 2.5, w));
+    // keep the spot in the middle of the screen where it was
+    var cx = (body.scrollLeft + body.clientWidth / 2) / width, cy = (body.scrollTop + body.clientHeight / 2) / width;
+    cur.style.width = w + 'px';
+    if (keep) { body.scrollLeft = cx * w - body.clientWidth / 2; body.scrollTop = cy * w - body.clientHeight / 2; }
+    width = w;
+  }
+  function open(svg) {
+    cur = svg; base = BASE[kind(svg)];
+    title.textContent = svg.getAttribute('data-zoom-title');
+    spot = document.createComment('drawing');
+    svg.parentNode.insertBefore(spot, svg);
+    body.appendChild(svg);
+    dlg.showModal();
+    width = 1; setWidth(base, false);
+    body.scrollLeft = (body.scrollWidth - body.clientWidth) / 2; body.scrollTop = 0;
+  }
+  dlg.addEventListener('close', function () {
+    if (!cur) return;
+    cur.style.width = '';
+    spot.parentNode.replaceChild(cur, spot);
+    cur = null;
+  });
+  dlg.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-z]');
+    if (!b) return;
+    var z = b.getAttribute('data-z');
+    if (z === 'close') dlg.close(); else setWidth(width * (z === 'in' ? 1.4 : 1 / 1.4), true);
+  });
+
+  document.querySelectorAll(SEL).forEach(function (svg) {
+    var fig = svg.closest('figure'), sec = fig.closest('section'), h = sec && sec.querySelector('h2');
+    var many = sec && sec.querySelectorAll(SEL).length > 1;
+    svg.setAttribute('data-zoom-title', (h ? h.textContent : '') + (many ? ' · ' + (svg.getAttribute('aria-label') || '').split(':')[0] : ''));
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'zoom-btn';
+    btn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>বড় করে দেখুন';
+    fig.insertBefore(btn, fig.querySelector('figcaption'));
+    btn.addEventListener('click', function () { open(svg); });
+    svg.addEventListener('click', function () { if (small.matches && svg.closest('figure')) open(svg); });
+  });
+})();
+</script>
